@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+*.egg-info/
+dist/
+build/
+
+# generated at runtime, not source
+/reports/*
+!/reports/.gitkeep
