@@ -1,0 +1,58 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "kresearch: research (ask for query)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "kresearch.cli",
+            "args": ["${input:query}", "--budget", "${input:budget}", "--verbose"],
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": false
+        },
+        {
+            "name": "kresearch: eval/run_eval.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/eval/run_eval.py",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": false
+        },
+        {
+            "name": "kresearch: pytest (current file)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["${file}", "-v", "-s"],
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": false
+        },
+        {
+            "name": "kresearch: pytest (all)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/", "-v"],
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": false
+        }
+    ],
+    "inputs": [
+        {
+            "id": "query",
+            "type": "promptString",
+            "description": "Research question",
+            "default": "What is the capital of Canada?"
+        },
+        {
+            "id": "budget",
+            "type": "promptString",
+            "description": "Budget in USD",
+            "default": "0.3"
+        }
+    ]
+}
