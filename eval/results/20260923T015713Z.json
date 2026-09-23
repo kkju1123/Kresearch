@@ -1,0 +1,169 @@
+[
+  {
+    "id": "q01",
+    "type": "factual",
+    "query": "What is the capital of Canada?",
+    "status": "done",
+    "elapsed_seconds": 39.9,
+    "cost_usd": 0.034579,
+    "rounds_used": 0,
+    "reason": null,
+    "citation_valid": 8,
+    "citation_total": 8,
+    "citation_validity_rate": 1.0,
+    "judge": {
+      "accuracy": 5,
+      "evidence_support": 4,
+      "coverage": 5,
+      "logical_consistency": 5,
+      "missing_points": [],
+      "notes": "All cited claims align with their quotes and the required point is addressed, though the citation labels are garbled and one quote supports only part of the location claim (missing the Gatineau River junction detail)."
+    }
+  },
+  {
+    "id": "q02",
+    "type": "factual",
+    "query": "Who wrote the novel 1984, and when was it published?",
+    "status": "done",
+    "elapsed_seconds": 41.1,
+    "cost_usd": 0.043246,
+    "rounds_used": 2,
+    "reason": null,
+    "citation_valid": 24,
+    "citation_total": 24,
+    "citation_validity_rate": 1.0,
+    "judge": {
+      "accuracy": 5,
+      "evidence_support": 5,
+      "coverage": 5,
+      "logical_consistency": 5,
+      "missing_points": [],
+      "notes": "All claims match cited quotes on author and 1949 publication date, covering both required points without contradictions."
+    }
+  },
+  {
+    "id": "q03",
+    "type": "comparison",
+    "query": "Compare PostgreSQL and MongoDB for a high-write analytics workload.",
+    "status": "partial",
+    "elapsed_seconds": 126.9,
+    "cost_usd": 0.067327,
+    "rounds_used": 2,
+    "reason": null,
+    "citation_valid": 115,
+    "citation_total": 115,
+    "citation_validity_rate": 1.0,
+    "judge": {
+      "accuracy": 5,
+      "evidence_support": 5,
+      "coverage": 5,
+      "logical_consistency": 5,
+      "missing_points": [],
+      "notes": "All claims match their quotes and the report covers all three required points coherently."
+    }
+  },
+  {
+    "id": "q04",
+    "type": "comparison",
+    "query": "Compare solar power and wind power in terms of cost and reliability.",
+    "status": "partial",
+    "elapsed_seconds": 175.2,
+    "cost_usd": 0.075544,
+    "rounds_used": 2,
+    "reason": null,
+    "citation_valid": 103,
+    "citation_total": 103,
+    "citation_validity_rate": 1.0,
+    "judge": {
+      "accuracy": 5,
+      "evidence_support": 5,
+      "coverage": 5,
+      "logical_consistency": 5,
+      "missing_points": [],
+      "notes": "All claims match cited quotes and the report covers solar cost trends, wind cost trends, and reliability differences."
+    }
+  },
+  {
+    "id": "q05",
+    "type": "trend",
+    "query": "What is the trend in global renewable energy capacity growth over the past five years?",
+    "status": "partial",
+    "elapsed_seconds": 164.0,
+    "cost_usd": 0.065191,
+    "rounds_used": 2,
+    "reason": null,
+    "citation_valid": 77,
+    "citation_total": 77,
+    "citation_validity_rate": 1.0,
+    "judge": {
+      "accuracy": 3,
+      "evidence_support": 3,
+      "coverage": 5,
+      "logical_consistency": 3,
+      "notes": "Report cites inconsistent 2024 growth figures (12%, 15.1%, 18%) and conflicting totals (4,300 vs 4,448 vs 3,870 GW) plus contradictory solar/wind electricity shares (nearly 20% vs 10%) without reconciling them."
+    }
+  },
+  {
+    "id": "q06",
+    "type": "trend",
+    "query": "How has remote work adoption changed since 2020?",
+    "status": "partial",
+    "elapsed_seconds": 171.6,
+    "cost_usd": 0.077406,
+    "rounds_used": 2,
+    "reason": null,
+    "citation_valid": 143,
+    "citation_total": 143,
+    "citation_validity_rate": 1.0,
+    "judge": {
+      "accuracy": 4,
+      "evidence_support": 3,
+      "coverage": 5,
+      "logical_consistency": 3,
+      "missing_points": [],
+      "notes": "Quotes generally match claims with minor issues (C23's cited quote omits the 45%/20% figures), coverage is complete, but the report includes contradictory remote-share statistics and unsupported internal contradictions like C67 appearing twice with different figures (53%/27%/21% vs 7%)."
+    }
+  },
+  {
+    "id": "q07",
+    "type": "open",
+    "query": "What are the main challenges facing renewable energy adoption?",
+    "status": "partial",
+    "elapsed_seconds": 174.7,
+    "cost_usd": 0.07231,
+    "rounds_used": 2,
+    "reason": null,
+    "citation_valid": 138,
+    "citation_total": 138,
+    "citation_validity_rate": 1.0,
+    "judge": {
+      "accuracy": 4,
+      "evidence_support": 4,
+      "coverage": 5,
+      "logical_consistency": 4,
+      "missing_points": [],
+      "notes": "Numbers, dates, and units match cited quotes; occasional redundancy and one over-broad lead (C14 conflates government support with climate-change wording), but required economic, technical, and social/regulatory barriers are all covered."
+    }
+  },
+  {
+    "id": "q08",
+    "type": "open",
+    "query": "How can small businesses improve their cybersecurity posture?",
+    "status": "partial",
+    "elapsed_seconds": 192.7,
+    "cost_usd": 0.080634,
+    "rounds_used": 2,
+    "reason": null,
+    "citation_valid": 136,
+    "citation_total": 136,
+    "citation_validity_rate": 1.0,
+    "judge": {
+      "accuracy": 4,
+      "evidence_support": 3,
+      "coverage": 5,
+      "logical_consistency": 4,
+      "missing_points": [],
+      "notes": "C111's quote about attacking multiple small businesses does not support reducing costs via proactive defense, and C160's quote omits the ransomware scenario detail, but numbers and units otherwise match."
+    }
+  }
+]

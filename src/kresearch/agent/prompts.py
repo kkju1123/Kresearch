@@ -117,3 +117,38 @@ def build_final_verify_prompt(report_markdown: str, claims: list[dict]) -> list[
         },
         {"role": "user", "content": f"{listing}\n\n---\nDraft report:\n{report_markdown}"},
     ]
+
+
+def build_judge_prompt(
+    query: str, required_points: list[str], report_markdown: str, cited_evidence: list[dict]
+) -> list[dict]:
+    """Independent LLM-as-Judge scoring, separate from the pipeline's own
+    Critic (plan.md 6.3): reads the same evidence quotes but is not the
+    agent that wrote or self-verified the report.
+    """
+    points_listing = "\n".join(f"- {p}" for p in required_points) or "(none specified)"
+    evidence_listing = "\n".join(f"- Claim: {e['claim']}\n  Quote: {e['quote']}" for e in cited_evidence) or "(none)"
+    return [
+        {
+            "role": "system",
+            "content": (
+                "You are an independent judge scoring a research report, separate from whatever "
+                "process produced it. Score four dimensions from 1 (poor) to 5 (excellent): "
+                "accuracy (do statements match their cited evidence quotes — check numbers, "
+                "units, dates, scope), evidence_support (are claims actually backed by the quotes "
+                "shown, not just topically related), coverage (does the report address every "
+                "required point listed), logical_consistency (no internal contradictions). "
+                'Respond with ONLY JSON: {"accuracy": int, "evidence_support": int, "coverage": '
+                'int, "logical_consistency": int, "missing_points": [str], "notes": str}. Keep '
+                "notes to one short sentence."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Research question: {query}\n\nRequired points:\n{points_listing}\n\n"
+                f"Cited claims and their evidence quotes:\n{evidence_listing}\n\n"
+                f"---\nReport:\n{report_markdown}"
+            ),
+        },
+    ]

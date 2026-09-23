@@ -1,0 +1,74 @@
+# M1 seed evaluation set (plan.md 6.3: start with 20, grow from here; these
+# 8 are the first slice covering the four intent types from plan.md 4.2 --
+# factual / comparison / trend / open-ended -- two of each).
+#
+# `required_points` are the key facts a competent answer should cover; the
+# judge scores "coverage" against this list, not against a full reference
+# answer (we don't have one yet).
+
+- id: q01
+  type: factual
+  query: "What is the capital of Canada?"
+  budget: 0.3
+  required_points:
+    - "Ottawa is the capital of Canada"
+
+- id: q02
+  type: factual
+  query: "Who wrote the novel 1984, and when was it published?"
+  budget: 0.3
+  required_points:
+    - "George Orwell wrote 1984"
+    - "It was published in 1949"
+
+- id: q03
+  type: comparison
+  query: "Compare PostgreSQL and MongoDB for a high-write analytics workload."
+  budget: 0.4
+  required_points:
+    - "PostgreSQL's relational/ACID model and its trade-offs for write-heavy workloads"
+    - "MongoDB's flexible schema and horizontal scaling characteristics"
+    - "A concrete trade-off relevant to choosing between them for analytics writes"
+
+- id: q04
+  type: comparison
+  query: "Compare solar power and wind power in terms of cost and reliability."
+  budget: 0.4
+  required_points:
+    - "Cost trend for solar power"
+    - "Cost trend for wind power"
+    - "A reliability/intermittency difference between the two"
+
+- id: q05
+  type: trend
+  query: "What is the trend in global renewable energy capacity growth over the past five years?"
+  budget: 0.4
+  required_points:
+    - "Renewable capacity has been growing"
+    - "Solar and/or wind are identified as the main drivers of that growth"
+
+- id: q06
+  type: trend
+  query: "How has remote work adoption changed since 2020?"
+  budget: 0.4
+  required_points:
+    - "Remote work increased sharply around 2020"
+    - "Some shift back toward office/hybrid work after the initial surge"
+
+- id: q07
+  type: open
+  query: "What are the main challenges facing renewable energy adoption?"
+  budget: 0.5
+  required_points:
+    - "Economic/cost barriers"
+    - "Technical/grid-integration barriers such as intermittency"
+    - "A social, regulatory, or political barrier"
+
+- id: q08
+  type: open
+  query: "How can small businesses improve their cybersecurity posture?"
+  budget: 0.5
+  required_points:
+    - "A people/training-related measure (e.g. phishing awareness)"
+    - "A technical control (e.g. MFA, patching, or backups)"
+    - "A cost or resource constraint specific to small businesses"

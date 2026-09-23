@@ -10,7 +10,6 @@ final-verification failures, capped at MAX_SUPPLEMENT_ROUNDS (plan.md 178:
 these share the same全任务最多 2 轮 budget, not independent limits each).
 """
 
-import json
 import logging
 import re
 import uuid
@@ -37,6 +36,7 @@ from kresearch.db.models import (
 from kresearch.fetch.web import UnsafeURLError, canonicalize_url, contains_suspicious_pattern, fetch_and_extract
 from kresearch.llm.client import complete
 from kresearch.search.tavily import search as tavily_search
+from kresearch.util import safe_json_object as _safe_json
 
 logger = logging.getLogger("kresearch.agent")
 
@@ -58,23 +58,6 @@ def _dynamic_max_tokens(n_items: int, per_item: int = 40, base: int = 200, cap: 
     once claim/citation counts grow past what it was sized for.
     """
     return min(cap, base + per_item * max(n_items, 1))
-
-
-def _safe_json(raw: str) -> dict:
-    original = raw
-    raw = raw.strip()
-    if raw.startswith("```"):
-        raw = re.sub(r"^```(json)?", "", raw).strip()
-        raw = re.sub(r"```$", "", raw).strip()
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError:
-        logger.warning("failed to parse JSON from model output (likely truncated by max_tokens): %r", original[-300:])
-        return {}
-    if not isinstance(parsed, dict):
-        logger.warning("model output was valid JSON but not an object: %r", original[:300])
-        return {}
-    return parsed
 
 
 async def _set_status(task_id: uuid.UUID, status: str) -> None:
