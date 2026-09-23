@@ -6,8 +6,9 @@ request is sent, per plan.md 5.3's "权限最小化" rule.
 """
 
 import ipaddress
+import re
 import socket
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import httpx
 import trafilatura
@@ -15,6 +16,44 @@ import trafilatura
 ALLOWED_SCHEMES = ("http", "https")
 BLOCKED_HOSTNAMES = {"localhost"}
 CLOUD_METADATA_IPS = {"169.254.169.254"}
+
+_TRACKING_PARAMS = {
+    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    "gclid", "fbclid", "ref", "mc_cid", "mc_eid",
+}
+
+_SUSPICIOUS_PATTERNS = [
+    re.compile(p, re.IGNORECASE)
+    for p in [
+        r"ignore (all |the )?(previous|prior|above) instructions",
+        r"disregard (all |the )?(previous|prior|above) (instructions|prompt)",
+        r"you are now",
+        r"system prompt",
+        r"new instructions?:",
+        r"act as (if|an?)\b.*\b(assistant|ai|model)\b",
+    ]
+]
+
+
+def canonicalize_url(url: str) -> str:
+    """Normalize a URL for dedup: lowercase scheme/host, strip fragment and
+    trailing slash, drop known tracking query params, sort remaining ones.
+    """
+    parsed = urlparse(url)
+    query_pairs = sorted(
+        (k, v) for k, v in parse_qsl(parsed.query, keep_blank_values=True) if k.lower() not in _TRACKING_PARAMS
+    )
+    path = parsed.path.rstrip("/") or "/"
+    return urlunparse((parsed.scheme.lower(), parsed.netloc.lower(), path, "", urlencode(query_pairs), ""))
+
+
+def contains_suspicious_pattern(text: str) -> bool:
+    """Lightweight regex scan for prompt-injection-style text (plan.md 5.3).
+
+    Not a security guarantee — a hit just downgrades the source's
+    credibility score rather than blocking it outright.
+    """
+    return any(p.search(text) for p in _SUSPICIOUS_PATTERNS)
 
 
 class UnsafeURLError(Exception):
