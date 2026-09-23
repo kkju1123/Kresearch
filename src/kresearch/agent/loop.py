@@ -42,6 +42,7 @@ logger = logging.getLogger("kresearch.agent")
 
 MAX_SUPPLEMENT_ROUNDS = 2
 MAX_URLS_PER_QUERY = 3
+MAX_CLAIMS_FOR_REPORT = 40
 MAX_SNAPSHOT_CHARS_FOR_LLM = 8000
 JSON_OBJECT = {"type": "json_object"}
 CITATION_RE = re.compile(r"\[C(\d+)\]")
@@ -50,6 +51,29 @@ ASSUMPTIONS_NOTE_EN = (
     "No clarifying question was asked before running this task; the query was researched "
     "as literally stated, without an additionally assumed time range or region."
 )
+
+
+def _dedupe_and_cap_claims(claims: list[Claim], max_claims: int) -> list[uuid.UUID]:
+    """Drop exact-duplicate claim text and cap the rest at max_claims.
+
+    Broad questions can produce 100+ verified claims across many pages with
+    no consolidation step (that's the Analysis/Synthesis Agent's job in the
+    target design, plan.md 4.1 -- M1 doesn't have one yet). Feeding all of
+    them into one write/verify call both makes for an unfocused report and
+    risks exceeding even the dynamic max_tokens ceiling. This is a stopgap
+    selection by extraction order, not real relevance ranking.
+    """
+    seen_text: set[str] = set()
+    selected: list[uuid.UUID] = []
+    for claim in claims:
+        key = claim.text.strip().lower()
+        if key in seen_text:
+            continue
+        seen_text.add(key)
+        selected.append(claim.id)
+        if len(selected) >= max_claims:
+            break
+    return selected
 
 
 def _dynamic_max_tokens(n_items: int, per_item: int = 40, base: int = 200, cap: int = 6000) -> int:
@@ -390,6 +414,12 @@ async def run(task_id: uuid.UUID, query: str) -> dict:
         logger.warning("task %s: no supported claims, failing", task_id)
         await _finish_task(task_id, "failed")
         return {"task_id": str(task_id), "status": "failed", "reason": "no claim had verifiable supporting evidence"}
+
+    if len(supported_ids) > MAX_CLAIMS_FOR_REPORT:
+        before = len(supported_ids)
+        supported_claim_objs = [c for c in claims if c.id in set(supported_ids)]
+        supported_ids = _dedupe_and_cap_claims(supported_claim_objs, MAX_CLAIMS_FOR_REPORT)
+        logger.info("task %s: capped claims for report from %d to %d (dedup + cap)", task_id, before, len(supported_ids))
 
     version = 1
     final_status = "failed"

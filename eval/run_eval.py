@@ -8,12 +8,16 @@ two independent ways:
      process, scoring accuracy / evidence_support / coverage / logical
      consistency against the question's required_points.
 
-Usage: uv run python eval/run_eval.py
+Usage: uv run python eval/run_eval.py [question_id ...]
+With no arguments, runs every question in questions.yaml. With one or more
+question ids (e.g. `q03 q04`), runs only those -- useful for re-running a
+subset after a fix without re-spending on questions that already passed.
 Writes a timestamped JSON + Markdown summary to eval/results/.
 """
 
 import asyncio
 import json
+import sys
 import time
 import uuid
 from datetime import datetime, timezone
@@ -91,8 +95,10 @@ async def _judge(
     return safe_json_object(raw)
 
 
-async def run_all() -> list[dict]:
+async def run_all(only_ids: set[str] | None = None) -> list[dict]:
     questions = yaml.safe_load(QUESTIONS_PATH.read_text(encoding="utf-8"))
+    if only_ids:
+        questions = [q for q in questions if q["id"] in only_ids]
     judge_task_id = await _create_task("__eval_judge__", JUDGE_BUDGET_USD)
 
     results = []
@@ -136,7 +142,7 @@ async def run_all() -> list[dict]:
             row["citation_validity_rate"] = round(valid / total, 3) if total else None
             row["judge"] = await _judge(
                 judge_task_id, q["query"], q.get("required_points", []), report.id, report_markdown,
-                call_key=f"judge:{q['id']}",
+                call_key=f"{judge_task_id}:judge:{q['id']}",
             )
 
         print(
@@ -178,7 +184,8 @@ def _summarize(results: list[dict]) -> str:
 
 
 def main() -> None:
-    results = asyncio.run(run_all())
+    only_ids = set(sys.argv[1:]) or None
+    results = asyncio.run(run_all(only_ids))
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
