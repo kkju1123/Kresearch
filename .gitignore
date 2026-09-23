@@ -7,6 +7,11 @@ dist/
 build/
 .DS_Store
 
+# local coding-agent tooling (installed skills), not project source
+/.agents/
+/.claude/
+/skills-lock.json
+
 # generated at runtime, not source
 /reports/*
 !/reports/.gitkeep
