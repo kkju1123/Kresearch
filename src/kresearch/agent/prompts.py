@@ -65,8 +65,9 @@ def build_verify_claims_prompt(query: str, claims: list[dict]) -> list[dict]:
                 "You are a fact-checking critic. For each numbered claim below, judge whether "
                 "its listed evidence quotes actually support the claim as stated — check that "
                 "numbers, units, dates, and scope match exactly, not just topical relevance. "
+                "Be terse, you must cover every claim id given. "
                 'Respond with ONLY JSON: {"verdicts": [{"id": str, "status": '
-                '"supported"|"insufficient"|"rejected", "reason": str}]}.'
+                '"supported"|"insufficient"|"rejected"}]}. No other fields, no prose.'
             ),
         },
         {"role": "user", "content": f"Research question: {query}\n\n{listing}"},

@@ -11,6 +11,7 @@ these share the same全任务最多 2 轮 budget, not independent limits each).
 """
 
 import json
+import logging
 import re
 import uuid
 from datetime import datetime, timezone
@@ -37,6 +38,8 @@ from kresearch.fetch.web import UnsafeURLError, canonicalize_url, contains_suspi
 from kresearch.llm.client import complete
 from kresearch.search.tavily import search as tavily_search
 
+logger = logging.getLogger("kresearch.agent")
+
 MAX_SUPPLEMENT_ROUNDS = 2
 MAX_URLS_PER_QUERY = 3
 MAX_SNAPSHOT_CHARS_FOR_LLM = 8000
@@ -49,7 +52,16 @@ ASSUMPTIONS_NOTE_EN = (
 )
 
 
+def _dynamic_max_tokens(n_items: int, per_item: int = 40, base: int = 200, cap: int = 6000) -> int:
+    """Scale max_tokens with how many items the model must cover in one JSON
+    response — a fixed budget silently truncates (and thus drops) verdicts
+    once claim/citation counts grow past what it was sized for.
+    """
+    return min(cap, base + per_item * max(n_items, 1))
+
+
 def _safe_json(raw: str) -> dict:
+    original = raw
     raw = raw.strip()
     if raw.startswith("```"):
         raw = re.sub(r"^```(json)?", "", raw).strip()
@@ -57,8 +69,12 @@ def _safe_json(raw: str) -> dict:
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
+        logger.warning("failed to parse JSON from model output (likely truncated by max_tokens): %r", original[-300:])
         return {}
-    return parsed if isinstance(parsed, dict) else {}
+    if not isinstance(parsed, dict):
+        logger.warning("model output was valid JSON but not an object: %r", original[:300])
+        return {}
+    return parsed
 
 
 async def _set_status(task_id: uuid.UUID, status: str) -> None:
@@ -182,7 +198,7 @@ async def _extract_claims(
         raw = await complete(
             session, task_id, agent_name="reading",
             messages=prompts.build_extract_prompt(query, title, url, text),
-            call_key=call_key, max_tokens=1024, response_format=JSON_OBJECT,
+            call_key=call_key, max_tokens=2048, response_format=JSON_OBJECT,
         )
         data = _safe_json(raw)
         claim_ids = []
@@ -240,7 +256,7 @@ async def _verify_claims(task_id: uuid.UUID, query: str, claim_ids: list[uuid.UU
         raw = await complete(
             session, task_id, agent_name="critic",
             messages=prompts.build_verify_claims_prompt(query, payload),
-            call_key=call_key, max_tokens=1024, response_format=JSON_OBJECT,
+            call_key=call_key, max_tokens=_dynamic_max_tokens(len(claims), per_item=25), response_format=JSON_OBJECT,
         )
         data = _safe_json(raw)
         for verdict in data.get("verdicts", []):
@@ -273,7 +289,7 @@ async def _write_report(
         markdown = await complete(
             session, task_id, agent_name="writer",
             messages=prompts.build_write_report_prompt(query, payload, assumptions),
-            call_key=call_key, max_tokens=2048,
+            call_key=call_key, max_tokens=_dynamic_max_tokens(len(claims), per_item=80, base=500, cap=6000),
         )
     return markdown, id_map, claim_to_evidence
 
@@ -289,7 +305,8 @@ async def _final_verify(
         raw = await complete(
             session, task_id, agent_name="critic",
             messages=prompts.build_final_verify_prompt(markdown, payload),
-            call_key=call_key, max_tokens=800, response_format=JSON_OBJECT,
+            call_key=call_key, max_tokens=_dynamic_max_tokens(len(payload), per_item=40, base=300),
+            response_format=JSON_OBJECT,
         )
     data = _safe_json(raw)
     status = data.get("status") if data.get("status") in ("done", "failed") else "failed"
@@ -321,17 +338,21 @@ async def run(task_id: uuid.UUID, query: str) -> dict:
     supplement_rounds_used = 0
     assumptions = [ASSUMPTIONS_NOTE_EN]
 
+    logger.info("task %s: planning", task_id)
     await _set_status(task_id, "planning")
     try:
         sub_queries = await _plan_queries(task_id, query)
     except BudgetExceededError:
+        logger.warning("task %s: budget exhausted before planning", task_id)
         await _finish_task(task_id, "failed")
         return {"task_id": str(task_id), "status": "failed", "reason": "budget exhausted before planning"}
+    logger.info("task %s: planned %d sub-queries: %s", task_id, len(sub_queries), sub_queries)
 
     budget_exhausted = False
     round_no = 0
     while True:
         round_no += 1
+        logger.info("task %s: round %d executing", task_id, round_no)
         await _set_status(task_id, "executing")
 
         for idx, sub_query in enumerate(sub_queries):
@@ -339,7 +360,9 @@ async def run(task_id: uuid.UUID, query: str) -> dict:
                 break
             try:
                 collected = await _search_and_fetch(task_id, sub_query, round_no, idx, seen_urls)
+                logger.info("task %s: sub-query %r -> %d new pages fetched", task_id, sub_query, len(collected))
             except BudgetExceededError:
+                logger.warning("task %s: budget exhausted during search", task_id)
                 budget_exhausted = True
                 break
             for j, (snapshot, text, title, url) in enumerate(collected):
@@ -350,7 +373,9 @@ async def run(task_id: uuid.UUID, query: str) -> dict:
                         task_id, query, snapshot, text, title, url, call_key=f"{task_id}:extract:{round_no}:{idx}:{j}"
                     )
                     all_claim_ids.extend(claim_ids)
+                    logger.info("task %s: extracted %d claims from %s", task_id, len(claim_ids), url)
                 except BudgetExceededError:
+                    logger.warning("task %s: budget exhausted during extraction", task_id)
                     budget_exhausted = True
                     break
 
@@ -367,24 +392,31 @@ async def run(task_id: uuid.UUID, query: str) -> dict:
             claims = [await session.get(Claim, cid) for cid in all_claim_ids]
         supported_ids = [c.id for c in claims if c.verification_status == "supported"]
         insufficient = [c for c in claims if c.verification_status != "supported"]
+        logger.info(
+            "task %s: round %d verified -> %d supported, %d not", task_id, round_no, len(supported_ids), len(insufficient)
+        )
 
         if budget_exhausted or not insufficient or supplement_rounds_used >= MAX_SUPPLEMENT_ROUNDS:
             break
         supplement_rounds_used += 1
         gap = "; ".join(c.text for c in insufficient[:5])
         sub_queries = [f"{query} (additional evidence needed for: {gap})"]
+        logger.info("task %s: supplementary round %d for gaps: %s", task_id, supplement_rounds_used, gap)
 
     if not supported_ids:
+        logger.warning("task %s: no supported claims, failing", task_id)
         await _finish_task(task_id, "failed")
         return {"task_id": str(task_id), "status": "failed", "reason": "no claim had verifiable supporting evidence"}
 
     version = 1
     final_status = "failed"
     markdown = ""
+    issues: list[dict] = []
     id_map: dict[str, uuid.UUID] = {}
     claim_to_evidence: dict[uuid.UUID, uuid.UUID] = {}
     while True:
         try:
+            logger.info("task %s: writing report draft v%d", task_id, version)
             await _set_status(task_id, "synthesizing")
             markdown, id_map, claim_to_evidence = await _write_report(
                 task_id, query, supported_ids, assumptions, call_key=f"{task_id}:write:{version}"
@@ -393,7 +425,9 @@ async def run(task_id: uuid.UUID, query: str) -> dict:
             final_status, issues = await _final_verify(
                 task_id, supported_ids, markdown, id_map, call_key=f"{task_id}:finalverify:{version}"
             )
+            logger.info("task %s: draft v%d final verification -> %s (%d issues)", task_id, version, final_status, len(issues))
         except BudgetExceededError:
+            logger.warning("task %s: budget exhausted during synthesis/verification", task_id)
             budget_exhausted = True
             final_status = "failed" if not markdown else "partial"
             break
@@ -405,5 +439,12 @@ async def run(task_id: uuid.UUID, query: str) -> dict:
 
     task_status = "done" if final_status == "done" else "partial"
     content_ref = await _persist_report(task_id, markdown, id_map, claim_to_evidence, version, final_status)
+    logger.info("task %s: finished with status=%s report=%s", task_id, task_status, content_ref)
     await _finish_task(task_id, task_status)
-    return {"task_id": str(task_id), "status": task_status, "report_path": content_ref, "rounds_used": supplement_rounds_used}
+    return {
+        "task_id": str(task_id),
+        "status": task_status,
+        "report_path": content_ref,
+        "rounds_used": supplement_rounds_used,
+        "issues": issues,
+    }
