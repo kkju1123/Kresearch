@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     tavily_api_key: str = ""
 
-    database_url: str = "postgresql+asyncpg://kresearch:kresearch@localhost:5432/kresearch"
+    database_url: str = "postgresql+asyncpg://kresearch:kresearch@localhost:5433/kresearch"
 
     default_task_budget_usd: float = 1.0
 

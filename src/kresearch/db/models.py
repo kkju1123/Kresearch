@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import ForeignKey, Index, Numeric, Text, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Index, Numeric, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from kresearch.db.base import Base
 
@@ -36,8 +36,8 @@ class Task(Base):
     budget: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False)
     plan_version: Mapped[int] = mapped_column(nullable=False, default=1)
     checkpoint: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(nullable=False, default=_now)
-    finished_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Source(Base):
@@ -50,7 +50,7 @@ class Source(Base):
             "owner_scope",
             "canonical_url",
             unique=True,
-            postgresql_where=Text("canonical_url IS NOT NULL"),
+            postgresql_where=text("canonical_url IS NOT NULL"),
         ),
     )
 
@@ -73,8 +73,8 @@ class SourceSnapshot(Base):
     content_hash: Mapped[str] = mapped_column(Text, nullable=False)
     content_ref: Mapped[str] = mapped_column(Text, nullable=False)
     document_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    published_at: Mapped[datetime | None] = mapped_column(nullable=True)
-    fetched_at: Mapped[datetime] = mapped_column(nullable=False, default=_now)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
 class TaskSource(Base):
@@ -163,7 +163,7 @@ class ToolCall(Base):
     actual_cost: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
     provider_request_id: Mapped[str | None] = mapped_column(Text, nullable=True)
     result_ref: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(nullable=False, default=_now)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
 class Message(Base):
@@ -177,4 +177,4 @@ class Message(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     agent_name: Mapped[str] = mapped_column(Text, nullable=False)
     tool_calls: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(nullable=False, default=_now)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
