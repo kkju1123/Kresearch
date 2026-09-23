@@ -12,6 +12,16 @@
             "justMyCode": false
         },
         {
+            "name": "kresearch: web server (debug)",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": ["kresearch.api:app", "--port", "8000"],
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": false
+        },
+        {
             "name": "kresearch: eval/run_eval.py",
             "type": "python",
             "request": "launch",
