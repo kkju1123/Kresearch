@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "kresearch: research (ask for query)",
-            "type": "debugpy",
+            "type": "python",
             "request": "launch",
             "module": "kresearch.cli",
             "args": ["${input:query}", "--budget", "${input:budget}", "--verbose"],
@@ -13,7 +13,7 @@
         },
         {
             "name": "kresearch: eval/run_eval.py",
-            "type": "debugpy",
+            "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/eval/run_eval.py",
             "console": "integratedTerminal",
@@ -22,7 +22,7 @@
         },
         {
             "name": "kresearch: pytest (current file)",
-            "type": "debugpy",
+            "type": "python",
             "request": "launch",
             "module": "pytest",
             "args": ["${file}", "-v", "-s"],
@@ -32,7 +32,7 @@
         },
         {
             "name": "kresearch: pytest (all)",
-            "type": "debugpy",
+            "type": "python",
             "request": "launch",
             "module": "pytest",
             "args": ["tests/", "-v"],

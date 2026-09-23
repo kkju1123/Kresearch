@@ -1,8 +1,5 @@
 import asyncio
-import hashlib
-import json
 import logging
-import uuid
 
 import typer
 
@@ -10,14 +7,9 @@ from kresearch.agent.loop import run as run_loop
 from kresearch.budget import ledger
 from kresearch.config import settings
 from kresearch.db.base import async_session_factory
-from kresearch.db.models import Task
+from kresearch.tasks import create_task
 
 app = typer.Typer(add_completion=False)
-
-
-def _request_hash(query: str, source_mode: str, budget: float) -> str:
-    payload = json.dumps({"query": query, "source_mode": source_mode, "budget": budget}, sort_keys=True)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 @app.command("research")
@@ -36,18 +28,7 @@ def research(
 
 
 async def _research(query: str, budget: float, user: str) -> None:
-    async with async_session_factory() as session:
-        task = Task(
-            user_id=user,
-            idempotency_key=str(uuid.uuid4()),
-            request_hash=_request_hash(query, "web", budget),
-            query=query,
-            budget=budget,
-        )
-        session.add(task)
-        await session.commit()
-        await session.refresh(task)
-        task_id = task.id
+    task_id = await create_task(query, budget, user=user)
 
     typer.echo(f"Task {task_id} started (budget=${budget:.4f})")
 
