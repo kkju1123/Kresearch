@@ -182,22 +182,34 @@
     background: var(--core);
     border: 2px solid var(--hairline);
     transform: translateY(-50%);
-    transition: border-color 0.3s var(--ease-spring), background 0.3s var(--ease-spring);
+    transition: border-color 0.3s var(--ease-spring), background 0.3s var(--ease-spring), width 0.25s var(--ease-spring), height 0.25s var(--ease-spring);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
+  .marker svg { display: none; width: 13px; height: 13px; color: var(--core); }
   .waypoint.walked .marker { border-color: var(--moss); background: var(--moss); opacity: 0.55; }
   .waypoint.current .marker {
     border-color: var(--moss);
     background: var(--moss);
     box-shadow: 0 0 0 5px var(--moss-wash);
   }
-  .waypoint.state-done .marker { border-color: var(--moss); background: var(--moss); box-shadow: 0 0 0 5px var(--moss-wash); }
-  .waypoint.state-partial .marker { border-color: var(--moss); background: var(--core); }
-  .waypoint.state-failed .marker { border-color: var(--error); background: var(--error); box-shadow: 0 0 0 5px var(--error-wash); }
+  /* Terminal states get a visibly bigger, filled marker with an icon so the
+     end of the trail reads as "finished", not just another muted step. */
+  .waypoint.state-done .marker, .waypoint.state-partial .marker, .waypoint.state-failed .marker {
+    width: 24px;
+    height: 24px;
+    left: -6px;
+    border-width: 0;
+  }
+  .waypoint.state-done .marker, .waypoint.state-partial .marker { background: var(--moss); box-shadow: 0 2px 8px rgba(33, 51, 31, 0.25); }
+  .waypoint.state-failed .marker { background: var(--error); box-shadow: 0 2px 8px rgba(163, 75, 60, 0.25); }
+  .waypoint.state-done .marker svg, .waypoint.state-partial .marker svg, .waypoint.state-failed .marker svg { display: block; }
   .waypoint-label { font-size: 15px; padding-top: 3px; color: var(--ink-soft); }
   .waypoint.walked .waypoint-label, .waypoint.current .waypoint-label { color: var(--ink); }
-  .waypoint.state-done .waypoint-label { color: var(--moss-strong); font-weight: 600; }
-  .waypoint.state-partial .waypoint-label { color: var(--moss-strong); font-weight: 600; }
-  .waypoint.state-failed .waypoint-label { color: var(--error); font-weight: 600; }
+  .waypoint.state-done .waypoint-label { color: var(--moss-strong); font-weight: 600; font-size: 16px; padding-top: 5px; }
+  .waypoint.state-partial .waypoint-label { color: var(--moss-strong); font-weight: 600; font-size: 16px; padding-top: 5px; }
+  .waypoint.state-failed .waypoint-label { color: var(--error); font-weight: 600; font-size: 16px; padding-top: 5px; }
 
   .meta {
     color: var(--ink-soft);
@@ -352,6 +364,14 @@ const issuesList = document.getElementById("issues");
 
 const TERMINAL = ["done", "partial", "failed", "cancelled", "timed_out"];
 
+// Icons injected only into the terminal marker, so the end of the trail is
+// unmistakably "finished" rather than reading as just another muted step.
+const MARKER_ICONS = {
+  done: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>',
+  partial: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 7v6"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/></svg>',
+  failed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+};
+
 function renderTrail(current, spent, budget) {
   statusLines.innerHTML = "";
   const isTerminal = TERMINAL.includes(current);
@@ -360,13 +380,16 @@ function renderTrail(current, spent, budget) {
   sequence.forEach((phase, i) => {
     const el = document.createElement("div");
     let cls = "waypoint";
+    let markerState = null;
     if (isTerminal && i === sequence.length - 1) {
-      cls += ` state-${phase === "cancelled" || phase === "timed_out" ? "failed" : phase}`;
+      markerState = phase === "cancelled" || phase === "timed_out" ? "failed" : phase;
+      cls += ` state-${markerState}`;
     } else if (i < sequence.length - 1 || (!isTerminal && phase === current)) {
       cls += i < sequence.length - 1 ? " walked" : " current";
     }
     el.className = cls;
-    el.innerHTML = `<div class="marker"></div><div class="waypoint-label">${PHASE_LABELS[phase] || phase}</div>`;
+    const icon = markerState ? MARKER_ICONS[markerState] : "";
+    el.innerHTML = `<div class="marker">${icon}</div><div class="waypoint-label">${PHASE_LABELS[phase] || phase}</div>`;
     statusLines.appendChild(el);
   });
 
@@ -453,6 +476,11 @@ async function finishUp(taskId) {
     reportDivider.classList.remove("hidden");
     reportCard.classList.remove("hidden");
     reportDiv.innerHTML = marked.parse(data.report_markdown);
+    // The trail ending doesn't guarantee the report card is in view (it can
+    // render below the fold), so bring it on screen rather than leaving the
+    // person staring at a finished trail wondering if anything happened.
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    reportCard.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
   }
 }
 </script>
