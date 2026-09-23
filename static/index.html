@@ -334,6 +334,7 @@ function renderTrail(current, spent, budget) {
     statusLines.appendChild(el);
   });
 
+  metaLine.style.color = "";
   metaLine.textContent = `花费 $${spent.toFixed(6)} / $${budget.toFixed(4)}`;
 }
 
@@ -352,21 +353,31 @@ form.addEventListener("submit", async (e) => {
   issuesList.classList.add("hidden");
   statusLines.innerHTML = "";
   metaLine.textContent = "";
+  metaLine.style.color = "";
 
-  const resp = await fetch("/research/tasks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, budget }),
-  });
+  let resp;
+  try {
+    resp = await fetch("/research/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, budget }),
+    });
+  } catch (err) {
+    showError("连不上服务——后端服务是不是没启动？（" + err.message + "）");
+    resetButton();
+    return;
+  }
   if (!resp.ok) {
-    metaLine.textContent = "提交失败: " + resp.status;
+    showError("提交失败：服务器返回了 " + resp.status);
     resetButton();
     return;
   }
   const { task_id } = await resp.json();
 
   const es = new EventSource(`/research/tasks/${task_id}/stream`);
+  let gotFirstEvent = false;
   es.onmessage = (event) => {
+    gotFirstEvent = true;
     const data = JSON.parse(event.data);
     renderTrail(data.status, data.spent, data.budget);
     if (TERMINAL.includes(data.status)) {
@@ -376,9 +387,19 @@ form.addEventListener("submit", async (e) => {
   };
   es.onerror = () => {
     es.close();
+    if (!gotFirstEvent) {
+      showError("进度连接断了，还没收到任何更新——服务器可能中途挂了，或者正在重启。");
+    } else {
+      showError("进度连接断了（服务器可能重启了）。任务可能还在后台跑，刷新页面看不到进度，但报告跑完会存在服务器上。");
+    }
     resetButton();
   };
 });
+
+function showError(message) {
+  metaLine.textContent = message;
+  metaLine.style.color = "var(--berry)";
+}
 
 function resetButton() {
   submitBtn.disabled = false;
