@@ -4,121 +4,282 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KResearch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   :root {
-    --bg: #0f1115;
-    --panel: #171a21;
-    --border: #2a2f3a;
-    --text: #e6e8eb;
-    --muted: #8b93a1;
-    --accent: #5b8def;
-    --ok: #3ecf8e;
-    --warn: #e0a940;
-    --err: #e05a5a;
+    --floor: #0d1712;
+    --canopy: #16261c;
+    --canopy-raised: #1c2e22;
+    --bark: #35492f;
+    --fern: #7fb069;
+    --fern-dim: #4a7c59;
+    --sunbeam: #e3b568;
+    --parchment: #ece6d6;
+    --mist: #8fa08e;
+    --berry: #c9705a;
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body: "Source Serif 4", Georgia, serif;
   }
+
   * { box-sizing: border-box; }
+
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--bg);
-    color: var(--text);
+    font-family: var(--font-body);
+    color: var(--parchment);
+    background-color: var(--floor);
+    background-image:
+      radial-gradient(ellipse 700px 420px at 15% -8%, rgba(227, 181, 104, 0.10), transparent 60%),
+      radial-gradient(ellipse 500px 360px at 90% 15%, rgba(127, 176, 105, 0.08), transparent 55%),
+      radial-gradient(ellipse 900px 600px at 50% 110%, rgba(0, 0, 0, 0.4), transparent 60%);
     display: flex;
     justify-content: center;
-    padding: 40px 16px;
+    padding: 56px 16px 80px;
   }
-  main { width: 100%; max-width: 760px; }
-  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
-  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-  form { display: flex; flex-direction: column; gap: 12px; }
-  label { font-size: 13px; color: var(--muted); }
-  input[type=text], input[type=number] {
-    width: 100%;
-    background: #0f1115;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    color: var(--text);
-    font-size: 14px;
-  }
-  .row { display: flex; gap: 12px; align-items: flex-end; }
-  .row > div:first-child { flex: 1; }
-  .row > div:last-child { width: 120px; }
-  button {
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 11px 18px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  button:disabled { background: #3a4152; cursor: not-allowed; }
-  .status-line {
+
+  main { width: 100%; max-width: 700px; }
+
+  /* ---------- header ---------- */
+  .mark {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    padding: 6px 0;
+    gap: 12px;
+    margin-bottom: 6px;
   }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
-  .dot.active { background: var(--accent); box-shadow: 0 0 0 4px rgba(91,141,239,0.2); }
-  .dot.done { background: var(--ok); }
-  .dot.warn { background: var(--warn); }
-  .dot.err { background: var(--err); }
-  .meta { color: var(--muted); font-size: 12px; margin-top: 8px; }
-  #report { line-height: 1.65; font-size: 15px; }
-  #report h1, #report h2, #report h3 { color: var(--text); }
-  #report a { color: var(--accent); }
-  #report code { background: #0f1115; padding: 2px 5px; border-radius: 4px; }
-  .hidden { display: none; }
-  .badge {
-    display: inline-block;
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: 999px;
+  .mark svg { color: var(--fern); flex-shrink: 0; }
+  h1 {
+    font-family: var(--font-display);
     font-weight: 600;
+    font-size: 27px;
+    letter-spacing: 0.2px;
+    margin: 0;
+    color: var(--parchment);
   }
-  .badge.done { background: rgba(62,207,142,0.15); color: var(--ok); }
-  .badge.partial { background: rgba(224,169,64,0.15); color: var(--warn); }
-  .badge.failed { background: rgba(224,90,90,0.15); color: var(--err); }
-  .issues { font-size: 13px; color: var(--warn); margin-top: 12px; }
-  .issues li { margin-bottom: 4px; }
+  .subtitle {
+    color: var(--mist);
+    font-size: 15px;
+    font-style: italic;
+    margin: 4px 0 34px 40px;
+  }
+
+  /* ---------- shared card ---------- */
+  .card {
+    background: var(--canopy);
+    border: 1px solid var(--bark);
+    border-radius: 8px;
+    padding: 22px 24px;
+    margin-bottom: 22px;
+    position: relative;
+  }
+
+  /* ---------- form ---------- */
+  form { display: flex; flex-direction: column; gap: 14px; }
+  label {
+    font-size: 13px;
+    color: var(--mist);
+    display: block;
+    margin-bottom: 6px;
+  }
+  input[type=text], input[type=number] {
+    width: 100%;
+    background: var(--floor);
+    border: 1px solid var(--bark);
+    border-radius: 5px;
+    padding: 10px 12px;
+    color: var(--parchment);
+    font-family: var(--font-body);
+    font-size: 15px;
+  }
+  input[type=text]:focus, input[type=number]:focus {
+    outline: none;
+    border-color: var(--fern-dim);
+  }
+  .row { display: flex; gap: 14px; align-items: flex-end; }
+  .row > div:first-child { flex: 1; }
+  .row > div:last-child { width: 130px; }
+  button {
+    background: var(--fern-dim);
+    color: var(--parchment);
+    border: 1px solid var(--fern);
+    border-radius: 5px;
+    padding: 11px 20px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  button:hover:not(:disabled) { background: var(--fern); }
+  button:active:not(:disabled) { transform: scale(0.98); }
+  button:disabled { background: var(--bark); border-color: var(--bark); color: var(--mist); cursor: not-allowed; }
+  .sprout {
+    display: inline-block;
+    margin-right: 6px;
+    transform-origin: bottom center;
+    animation: none;
+  }
+  button.sprouting .sprout { animation: sprout-grow 0.6s ease-out; }
+  @keyframes sprout-grow {
+    0% { transform: scaleY(0.2); opacity: 0.4; }
+    60% { transform: scaleY(1.15); opacity: 1; }
+    100% { transform: scaleY(1); opacity: 1; }
+  }
+
+  /* ---------- trail progress ---------- */
+  .trail { position: relative; padding-left: 4px; }
+  .waypoint {
+    position: relative;
+    display: flex;
+    gap: 14px;
+    padding: 3px 0 3px 26px;
+  }
+  .waypoint::before {
+    /* connecting line segment */
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: -3px;
+    bottom: -3px;
+    width: 1px;
+    background: var(--bark);
+  }
+  .waypoint:first-child::before { top: 50%; }
+  .waypoint:last-child::before { bottom: 50%; }
+  .waypoint.walked::before { background: var(--fern-dim); }
+  .marker {
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--floor);
+    border: 2px solid var(--bark);
+    transform: translateY(-50%);
+  }
+  .waypoint.walked .marker { border-color: var(--fern-dim); background: var(--fern-dim); }
+  .waypoint.current .marker {
+    border-color: var(--fern);
+    background: var(--fern);
+    box-shadow: 0 0 0 5px rgba(127, 176, 105, 0.22);
+  }
+  .waypoint.state-done .marker { border-color: var(--sunbeam); background: var(--sunbeam); box-shadow: 0 0 0 5px rgba(227, 181, 104, 0.22); }
+  .waypoint.state-partial .marker { border-color: var(--sunbeam); background: var(--canopy); }
+  .waypoint.state-failed .marker { border-color: var(--berry); background: var(--berry); }
+  .waypoint-label { font-size: 15px; padding-top: 2px; color: var(--mist); }
+  .waypoint.walked .waypoint-label, .waypoint.current .waypoint-label { color: var(--parchment); }
+  .waypoint.state-done .waypoint-label { color: var(--sunbeam); font-weight: 600; }
+  .waypoint.state-partial .waypoint-label { color: var(--sunbeam); font-weight: 600; }
+  .waypoint.state-failed .waypoint-label { color: var(--berry); font-weight: 600; }
+
+  .meta {
+    color: var(--mist);
+    font-size: 13px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--bark);
+  }
+
+  /* ---------- divider ---------- */
+  .frond-divider { display: block; width: 100%; height: 22px; margin: 6px 0 26px; color: var(--bark); }
+
+  /* ---------- report ---------- */
+  #report { line-height: 1.7; font-size: 16.5px; }
+  #report h1 {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--parchment);
+    margin: 0 0 18px;
+  }
+  #report h2 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--fern);
+    margin: 28px 0 10px;
+  }
+  #report h3 { font-family: var(--font-display); font-size: 16px; color: var(--parchment); }
+  #report p { margin: 0 0 14px; }
+  #report a { color: var(--sunbeam); }
+  #report code { background: var(--floor); border: 1px solid var(--bark); padding: 1px 5px; border-radius: 4px; font-size: 14px; }
+  #report ul, #report ol { padding-left: 22px; }
+
+  .hidden { display: none; }
+
+  .issues {
+    font-size: 13.5px;
+    color: var(--sunbeam);
+    margin: 20px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--bark);
+    list-style: none;
+  }
+  .issues li { margin-bottom: 6px; padding-left: 16px; position: relative; }
+  .issues li::before { content: "·"; position: absolute; left: 4px; color: var(--sunbeam); }
+
+  @media (max-width: 480px) {
+    body { padding: 36px 14px 60px; }
+    .row { flex-direction: column; align-items: stretch; gap: 14px; }
+    .row > div:last-child { width: 100%; }
+    h1 { font-size: 23px; }
+    .subtitle { margin-left: 0; }
+    .mark { gap: 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button.sprouting .sprout { animation: none; }
+    button { transition: none; }
+  }
 </style>
 </head>
 <body>
 <main>
-  <h1>KResearch</h1>
-  <div class="subtitle">Deep Research Agent — 提交一个问题，看它自己搜索、抓取、验证、写报告</div>
+  <div class="mark">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 21V9"/>
+      <path d="M12 15c0-4.5 2-7 6.5-8.5C17.5 11 15 14 12 15Z"/>
+      <path d="M12 12c0-4-2-6.5-6.5-8C6 9 8.5 11.5 12 12Z"/>
+    </svg>
+    <h1>KResearch</h1>
+  </div>
+  <div class="subtitle">提交一个问题，看它自己踏勘、取证、核实、写成报告</div>
 
   <div class="card">
     <form id="task-form">
       <div class="row">
         <div>
           <label for="query">研究问题</label>
-          <input type="text" id="query" placeholder="例如：What is the capital of Canada?" required>
+          <input type="text" id="query" placeholder="例如：加拿大的首都是哪里？" required>
         </div>
         <div>
-          <label for="budget">预算 ($)</label>
+          <label for="budget">预算（$）</label>
           <input type="number" id="budget" value="0.3" step="0.05" min="0.01" required>
         </div>
       </div>
-      <button type="submit" id="submit-btn">开始研究</button>
+      <button type="submit" id="submit-btn">
+        <svg class="sprout" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 20V10"/><path d="M12 13c0-3 1.5-5 5-6-.5 3.5-2 5.5-5 6Z"/><path d="M12 11c0-3-1.5-5-5-6 .5 3.5 2 5.5 5 6Z"/>
+        </svg>
+        出发探索
+      </button>
     </form>
   </div>
 
   <div class="card hidden" id="progress-card">
-    <div id="status-lines"></div>
+    <div class="trail" id="status-lines"></div>
     <div class="meta" id="meta-line"></div>
   </div>
+
+  <svg class="frond-divider hidden" id="report-divider" viewBox="0 0 700 22" preserveAspectRatio="none">
+    <line x1="0" y1="11" x2="290" y2="11" stroke="currentColor" stroke-width="1"/>
+    <line x1="410" y1="11" x2="700" y2="11" stroke="currentColor" stroke-width="1"/>
+    <path d="M350 11c-10-8-8-14 0-14s10 6 0 14Z" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <path d="M350 11c-6 5-4 9 0 9s6-4 0-9Z" fill="currentColor" stroke="none" opacity="0.5"/>
+  </svg>
 
   <div class="card hidden" id="report-card">
     <div id="report"></div>
@@ -127,16 +288,18 @@
 </main>
 
 <script>
-const PHASES = ["pending", "planning", "executing", "verifying", "synthesizing", "done"];
+const PHASES = ["pending", "planning", "executing", "verifying", "synthesizing"];
 const PHASE_LABELS = {
-  pending: "排队中",
-  planning: "拆解问题、规划子查询",
-  executing: "检索并抓取网页",
-  verifying: "核查证据是否支持论点",
-  synthesizing: "撰写报告草稿",
-  done: "完成",
-  partial: "部分完成（有未解决的疑点）",
-  failed: "失败",
+  pending: "等待出发",
+  planning: "规划路线 — 把问题拆成具体的检索方向",
+  executing: "沿途搜索 — 抓取网页、采集资料",
+  verifying: "核对证据 — 检查每条说法是否站得住脚",
+  synthesizing: "整理见闻 — 写成报告初稿",
+  done: "抵达终点",
+  partial: "半途而返 — 仍有疑点未解",
+  failed: "此路不通",
+  cancelled: "中途折返",
+  timed_out: "迷路超时",
 };
 
 const form = document.getElementById("task-form");
@@ -144,37 +307,33 @@ const submitBtn = document.getElementById("submit-btn");
 const progressCard = document.getElementById("progress-card");
 const statusLines = document.getElementById("status-lines");
 const metaLine = document.getElementById("meta-line");
+const reportDivider = document.getElementById("report-divider");
 const reportCard = document.getElementById("report-card");
 const reportDiv = document.getElementById("report");
 const issuesList = document.getElementById("issues");
 
-let seenStatuses = [];
+const TERMINAL = ["done", "partial", "failed", "cancelled", "timed_out"];
 
-function renderStatusLines(current, spent, budget) {
+function renderTrail(current, spent, budget) {
   statusLines.innerHTML = "";
-  const order = ["pending", "planning", "executing", "verifying", "synthesizing", current];
-  const uniqueOrder = [...new Set(PHASES.includes(current) ? PHASES.slice(0, PHASES.indexOf(current) + 1) : [...PHASES, current])];
+  const isTerminal = TERMINAL.includes(current);
+  const walkedThrough = isTerminal ? PHASES.length : PHASES.indexOf(current);
 
-  for (const phase of uniqueOrder) {
-    const line = document.createElement("div");
-    line.className = "status-line";
-    const dot = document.createElement("div");
-    let dotClass = "dot";
-    if (phase === current) {
-      if (phase === "done") dotClass += " done";
-      else if (phase === "partial") dotClass += " warn";
-      else if (phase === "failed") dotClass += " err";
-      else dotClass += " active";
-    } else {
-      dotClass += " done";
+  const sequence = isTerminal ? [...PHASES, current] : PHASES.slice(0, PHASES.indexOf(current) + 1);
+
+  sequence.forEach((phase, i) => {
+    const el = document.createElement("div");
+    let cls = "waypoint";
+    if (isTerminal && i === sequence.length - 1) {
+      cls += ` state-${phase === "cancelled" || phase === "timed_out" ? "failed" : phase}`;
+    } else if (i < sequence.length - 1 || (!isTerminal && phase === current)) {
+      cls += i < sequence.length - 1 ? " walked" : " current";
     }
-    dot.className = dotClass;
-    const label = document.createElement("span");
-    label.textContent = PHASE_LABELS[phase] || phase;
-    line.appendChild(dot);
-    line.appendChild(label);
-    statusLines.appendChild(line);
-  }
+    el.className = cls;
+    el.innerHTML = `<div class="marker"></div><div class="waypoint-label">${PHASE_LABELS[phase] || phase}</div>`;
+    statusLines.appendChild(el);
+  });
+
   metaLine.textContent = `花费 $${spent.toFixed(6)} / $${budget.toFixed(4)}`;
 }
 
@@ -185,9 +344,11 @@ form.addEventListener("submit", async (e) => {
   if (!query) return;
 
   submitBtn.disabled = true;
-  submitBtn.textContent = "运行中...";
+  submitBtn.classList.add("sprouting");
+  submitBtn.lastChild.textContent = " 正在出发…";
   progressCard.classList.remove("hidden");
   reportCard.classList.add("hidden");
+  reportDivider.classList.add("hidden");
   issuesList.classList.add("hidden");
   statusLines.innerHTML = "";
   metaLine.textContent = "";
@@ -199,8 +360,7 @@ form.addEventListener("submit", async (e) => {
   });
   if (!resp.ok) {
     metaLine.textContent = "提交失败: " + resp.status;
-    submitBtn.disabled = false;
-    submitBtn.textContent = "开始研究";
+    resetButton();
     return;
   }
   const { task_id } = await resp.json();
@@ -208,27 +368,32 @@ form.addEventListener("submit", async (e) => {
   const es = new EventSource(`/research/tasks/${task_id}/stream`);
   es.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    renderStatusLines(data.status, data.spent, data.budget);
-    if (["done", "partial", "failed", "cancelled", "timed_out"].includes(data.status)) {
+    renderTrail(data.status, data.spent, data.budget);
+    if (TERMINAL.includes(data.status)) {
       es.close();
       finishUp(task_id);
     }
   };
   es.onerror = () => {
     es.close();
-    submitBtn.disabled = false;
-    submitBtn.textContent = "开始研究";
+    resetButton();
   };
 });
 
-async function finishUp(taskId) {
+function resetButton() {
   submitBtn.disabled = false;
-  submitBtn.textContent = "开始研究";
+  submitBtn.classList.remove("sprouting");
+  submitBtn.lastChild.textContent = " 出发探索";
+}
+
+async function finishUp(taskId) {
+  resetButton();
 
   const resp = await fetch(`/research/tasks/${taskId}`);
   const data = await resp.json();
 
   if (data.report_markdown) {
+    reportDivider.classList.remove("hidden");
     reportCard.classList.remove("hidden");
     reportDiv.innerHTML = marked.parse(data.report_markdown);
   }
